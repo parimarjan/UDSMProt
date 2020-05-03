@@ -5,34 +5,24 @@ mkdir -p datasets/clas_scop
 mkdir -p datasets/clas_scop_fold
 mkdir -p datasets/clas_go
 
-##################################
-#default LMs
-##################################
-#lm sprot (default=clustered)
-#python proteomics_preprocessing.py lm_sprot --working_folder=datasets/lm/lm_sprot_uniref --ignore_clusters=False --sampling_ratio=[.9,.05,.05] --sampling_method_train=1 --sampling_method_valtest=3 --drop_fragments=False
+#python proteomics_preprocessing.py clas_ec --drop_ec7=True --working_folder=datasets/clas_ec/clas_ec_ec50_level0 --pretrained_folder=datasets/lm/lm_sprot_uniref --level=0 --include_NoEC=True --dataset="uniprot" --sampling_method_train=1 --sampling_method_valtest=3 --ignore_pretrained_clusters=True --sampling_ratio=[.8,.1,.1] --save_prev_ids=True
 
-#lm sprot dirty (disregarding clusters)
-#python proteomics_preprocessing.py lm_sprot --working_folder=datasets/lm/lm_sprot_dirty --ignore_clusters=True --sampling_ratio=[.9,.05,.05] --sampling_method_train=1 --sampling_method_valtest=3 --drop_fragments=False
-
-#lm sprot dirty subsampling
-#python proteomics_preprocessing.py lm_sprot --working_folder=datasets/lm/lm_sprot_dirty_subsampling633 --ignore_clusters=True --sampling_ratio=[.9,.05,.05] --sampling_method_train=1 --sampling_method_valtest=3 --drop_fragments=False --subsampling_ratio_train=0.633
-
-#cdhit04 dirty
-#python proteomics_preprocessing.py lm_sprot --working_folder=datasets/lm/lm_sprot_dirty2 --cluster_type=cdhit04 --ignore_clusters=True --sampling_ratio=[.9,.05,.05] --sampling_method_train=1 --sampling_method_valtest=3 --drop_fragments=False --source_sprot=../data/uniprot_sprot_2016_07.xml
-
-##################################
-#EC uniprot (EC50)
-##################################
-python proteomics_preprocessing.py clas_ec --drop_ec7=True --working_folder=datasets/clas_ec/clas_ec_ec50_level0 --pretrained_folder=datasets/lm/lm_sprot_uniref --level=0 --include_NoEC=True --dataset="uniprot" --sampling_method_train=1 --sampling_method_valtest=3 --ignore_pretrained_clusters=True --sampling_ratio=[.8,.1,.1] --save_prev_ids=True
 #python proteomics_preprocessing.py clas_ec --drop_ec7=True --working_folder=datasets/clas_ec/clas_ec_ec50_level1 --pretrained_folder=datasets/lm/lm_sprot_uniref --level=1 --include_NoEC=False --dataset="uniprot" --sampling_method_train=1 --sampling_method_valtest=3 --ignore_pretrained_clusters=True --sampling_ratio=[.8,.1,.1] --save_prev_ids=True
 #python proteomics_preprocessing.py clas_ec --drop_ec7=True --working_folder=datasets/clas_ec/clas_ec_ec50_level1 --pretrained_folder=datasets/lm/lm_sprot_uniref --level=2 --include_NoEC=False --dataset="uniprot" --sampling_method_train=1 --sampling_method_valtest=3 --ignore_pretrained_clusters=True --sampling_ratio=[.8,.1,.1] --save_prev_ids=True
-#python proteomics_preprocessing.py clas_ec --drop_ec7=True --working_folder=datasets/clas_ec/clas_ec_ec50_level0_nonredundant --pretrained_folder=datasets/lm/lm_sprot_uniref --level=0 --include_NoEC=True --dataset="uniprot" --sampling_method_train=3 --sampling_method_valtest=3 --ignore_pretrained_clusters=True --sampling_ratio=[.8,.1,.1] 
-#python proteomics_preprocessing.py clas_ec --drop_ec7=True --working_folder=datasets/clas_ec/clas_ec_ec50_level1_nonredundant --pretrained_folder=datasets/lm/lm_sprot_uniref --level=1 --include_NoEC=False --dataset="uniprot" --sampling_method_train=3 --sampling_method_valtest=3 --ignore_pretrained_clusters=True --sampling_ratio=[.8,.1,.1] 
+#python proteomics_preprocessing.py clas_ec --drop_ec7=True --working_folder=datasets/clas_ec/clas_ec_ec50_level0_nonredundant --pretrained_folder=datasets/lm/lm_sprot_uniref --level=0 --include_NoEC=True --dataset="uniprot" --sampling_method_train=3 --sampling_method_valtest=3 --ignore_pretrained_clusters=True --sampling_ratio=[.8,.1,.1]
+#python proteomics_preprocessing.py clas_ec --drop_ec7=True --working_folder=datasets/clas_ec/clas_ec_ec50_level1_nonredundant --pretrained_folder=datasets/lm/lm_sprot_uniref --level=1 --include_NoEC=False --dataset="uniprot" --sampling_method_train=3 --sampling_method_valtest=3 --ignore_pretrained_clusters=True --sampling_ratio=[.8,.1,.1]
 
 ##################################
 #EC cdhit04 (EC40)
 ##################################
-#python proteomics_preprocessing.py clas_ec --drop_ec7=True --working_folder=datasets/clas_ec/clas_ec_ec40_level0 --pretrained_folder=datasets/lm/lm_sprot_dirty --level=0 --include_NoEC=True --dataset="uniprot" --sampling_method_train=1 --sampling_method_valtest=3 --ignore_pretrained_clusters=True --sampling_ratio=[.8,.1,.1] --save_prev_ids=True --cluster_type=cdhit04 --source_sprot=../data/uniprot_sprot_2016_07.xml
+python proteomics_preprocessing.py clas_ec --drop_ec7=True \
+--working_folder=datasets/clas_ec/clas_ec_ec40_level0 \
+--pretrained_folder=datasets/lm/lm_sprot_dirty --level=0 --include_NoEC=True \
+--dataset="uniprot" --sampling_method_train=1 --sampling_method_valtest=3 \
+--ignore_pretrained_clusters=True --sampling_ratio=[.8,.1,.1] \
+--save_prev_ids=True --cluster_type=cdhit04 \
+--source_sprot=/data/pari/UDSMProt/data/uniprot_sprot_2017_03.xml
+
 #python proteomics_preprocessing.py clas_ec --drop_ec7=True --working_folder=datasets/clas_ec/clas_ec_ec40_level1 --pretrained_folder=datasets/lm/lm_sprot_dirty --level=1 --include_NoEC=False --dataset="uniprot" --sampling_method_train=1 --sampling_method_valtest=3 --ignore_pretrained_clusters=True --sampling_ratio=[.8,.1,.1] --save_prev_ids=True --cluster_type=cdhit04 --source_sprot=../data/uniprot_sprot_2016_07.xml
 #python proteomics_preprocessing.py clas_ec --drop_ec7=True --working_folder=datasets/clas_ec/clas_ec_ec40_level2 --pretrained_folder=datasets/lm/lm_sprot_dirty --level=2 --include_NoEC=False --dataset="uniprot" --sampling_method_train=1 --sampling_method_valtest=3 --ignore_pretrained_clusters=True --sampling_ratio=[.8,.1,.1] --save_prev_ids=True --cluster_type=cdhit04 --source_sprot=../data/uniprot_sprot_2016_07.xml
 ##python proteomics_preprocessing.py clas_ec --drop_ec7=True --working_folder=datasets/clas_ec/clas_ec_ec40_level0_nonredundant --pretrained_folder=datasets/lm/lm_sprot_dirty --level=0 --include_NoEC=True --dataset="uniprot" --sampling_method_train=3 --sampling_method_valtest=3 --ignore_pretrained_clusters=True --sampling_ratio=[.8,.1,.1] --cluster_type=cdhit04 --source_sprot=../data/uniprot_sprot_2016_07.xml
@@ -41,7 +31,7 @@ python proteomics_preprocessing.py clas_ec --drop_ec7=True --working_folder=data
 ###################################
 ##EC uniprot subsampling (EC50)
 ###################################
-##python proteomics_preprocessing.py clas_ec --drop_ec7=True --working_folder=datasets/clas_ec/clas_ec_ec50_level1_subsampling75 --pretrained_folder=datasets/lm/lm_sprot_uniref --level=1 --dataset="uniprot" --sampling_method_train=1 --sampling_method_valtest=3 --ignore_pretrained_clusters=True --sampling_ratio=[.8,.1,.1] --subsampling_ratio_train=0.75
+#python proteomics_preprocessing.py clas_ec --drop_ec7=True --working_folder=datasets/clas_ec/clas_ec_ec50_level1_subsampling75 --pretrained_folder=datasets/lm/lm_sprot_uniref --level=1 --dataset="uniprot" --sampling_method_train=1 --sampling_method_valtest=3 --ignore_pretrained_clusters=True --sampling_ratio=[.8,.1,.1] --subsampling_ratio_train=0.75
 ##python proteomics_preprocessing.py clas_ec --drop_ec7=True --working_folder=datasets/clas_ec/clas_ec_ec50_level1_subsampling50 --pretrained_folder=datasets/lm/lm_sprot_uniref --level=1 --dataset="uniprot" --sampling_method_train=1 --sampling_method_valtest=3 --ignore_pretrained_clusters=True --sampling_ratio=[.8,.1,.1] --subsampling_ratio_train=0.50
 ##python proteomics_preprocessing.py clas_ec --drop_ec7=True --working_folder=datasets/clas_ec/clas_ec_ec50_level1_subsampling25 --pretrained_folder=datasets/lm/lm_sprot_uniref --level=1 --dataset="uniprot" --sampling_method_train=1 --sampling_method_valtest=3 --ignore_pretrained_clusters=True --sampling_ratio=[.8,.1,.1] --subsampling_ratio_train=0.25
 ##python proteomics_preprocessing.py clas_ec --drop_ec7=True --working_folder=datasets/clas_ec/clas_ec_ec50_level1_subsampling10 --pretrained_folder=datasets/lm/lm_sprot_uniref --level=1 --dataset="uniprot" --sampling_method_train=1 --sampling_method_valtest=3 --ignore_pretrained_clusters=True --sampling_ratio=[.8,.1,.1] --subsampling_ratio_train=0.10
@@ -52,13 +42,25 @@ python proteomics_preprocessing.py clas_ec --drop_ec7=True --working_folder=data
 ###################################
 ##clean LMs (EC50)
 ###################################
-##python proteomics_preprocessing.py lm_sprot --working_folder=datasets/lm/lm_sprot_clean_clas_ec_ec50_level0 --ignore_clusters=False --sampling_ratio=[.9,.05,.05] --sampling_method_train=1 --sampling_method_valtest=3 --pretrained_folder=datasets/clas_ec/clas_ec_ec50_level0
+#python proteomics_preprocessing.py lm_sprot
+#--working_folder=datasets/lm/lm_sprot_clean_clas_ec_ec50_level0 \
+#--ignore_clusters=True --sampling_ratio=[.9,.05,.05] \
+#--sampling_method_train=1 --sampling_method_valtest=3 \
+#--pretrained_folder=datasets/clas_ec/clas_ec_ec50_level0 \
+#--source_sprot=/data/pari/UDSMProt/data/uniprot_sprot_2017_03.xml
+
 ##python proteomics_preprocessing.py lm_sprot --working_folder=datasets/lm/lm_sprot_clean_clas_ec_ec50_level1 --ignore_clusters=False --sampling_ratio=[.9,.05,.05] --sampling_method_train=1 --sampling_method_valtest=3 --pretrained_folder=datasets/clas_ec/clas_ec_ec50_level1
 
 ###################################
 ##clean LMs (EC40)
 ###################################
-##python proteomics_preprocessing.py lm_sprot --working_folder=datasets/lm/lm_sprot_clean_clas_ec_ec40_level0 --ignore_clusters=False --sampling_ratio=[.9,.05,.05] --sampling_method_train=1 --sampling_method_valtest=3 --pretrained_folder=datasets/clas_ec/clas_ec_ec40_level0 --cluster_type=cdhit04 --source_sprot=../data/uniprot_sprot_2016_07.xml
+#python proteomics_preprocessing.py lm_sprot \
+#--working_folder=datasets/lm/lm_sprot_clean_clas_ec_ec40_level0 \
+#--ignore_clusters=False --sampling_ratio=[.9,.05,.05] --sampling_method_train=1 \
+#--sampling_method_valtest=3 \
+#--pretrained_folder=datasets/clas_ec/clas_ec_ec40_level0 --cluster_type=cdhit04 \
+#--source_sprot=/data/pari/UDSMProt/data/uniprot_sprot_2017_03.xml
+
 ##python proteomics_preprocessing.py lm_sprot --working_folder=datasets/lm/lm_sprot_clean_clas_ec_ec40_level1 --ignore_clusters=False --sampling_ratio=[.9,.05,.05] --sampling_method_train=1 --sampling_method_valtest=3 --pretrained_folder=datasets/clas_ec/clas_ec_ec40_level1 --cluster_type=cdhit04 --source_sprot=../data/uniprot_sprot_2016_07.xml
 
 ###################################
@@ -92,8 +94,14 @@ python proteomics_preprocessing.py clas_ec --drop_ec7=True --working_folder=data
 
 ###################################
 ## deepre via accessions
-##python proteomics_preprocessing.py clas_ec --working_folder=datasets/clas_ec/clas_ec_deepre_accessions_level0 --pretrained_folder=datasets/lm/lm_sprot_uniref --level=0 --include_NoEC=True --dataset="deepre_accessions" --sampling_method_train=1 --sampling_method_valtest=1 --ignore_pretrained_clusters=True --sampling_ratio=[.8,.1,.1]
-##python proteomics_preprocessing.py clas_ec --working_folder=datasets/clas_ec/clas_ec_deepre_accessions_level1 --pretrained_folder=datasets/lm/lm_sprot_uniref --level=1 --include_NoEC=False --dataset="deepre_accessions" --sampling_method_train=1 --sampling_method_valtest=1 --ignore_pretrained_clusters=True --sampling_ratio=[.8,.1,.1]
+#python proteomics_preprocessing.py clas_ec \
+#--working_folder=datasets/clas_ec/clas_ec_deepre_accessions_level0 \
+#--pretrained_folder=datasets/lm/lm_sprot_uniref --level=0 --include_NoEC=True \
+#--dataset="deepre_accessions" --sampling_method_train=1 \
+#--sampling_method_valtest=1 --ignore_pretrained_clusters=False \
+#--sampling_ratio=[.8,.1,.1]
+
+#python proteomics_preprocessing.py clas_ec --working_folder=datasets/clas_ec/clas_ec_deepre_accessions_level1 --pretrained_folder=datasets/lm/lm_sprot_uniref --level=1 --include_NoEC=False --dataset="deepre_accessions" --sampling_method_train=1 --sampling_method_valtest=1 --ignore_pretrained_clusters=True --sampling_ratio=[.8,.1,.1]
 
 ##5-fold CV
 #python proteomics_preprocessing.py clas_ec --working_folder=datasets/clas_ec/clas_ec_deepre_accessions_level0_5foldcv --pretrained_folder=datasets/lm/lm_sprot_uniref --level=0 --include_NoEC=True --dataset="deepre_accessions" --nfolds=5 --sampling_method_train=1 --sampling_method_valtest=1 --ignore_pretrained_clusters=True

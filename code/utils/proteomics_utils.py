@@ -994,7 +994,9 @@ def fasta_to_df(fasta_path):
 ###########################################################################
 # Processing CD-HIT clusters
 ###########################################################################
-def clusters_df_from_sequence_df(df,threshold=[1.0,0.9,0.5],alignment_coverage=[0.0,0.9,0.8],memory=16000, threads=8, exploded=True, verbose=False):
+def clusters_df_from_sequence_df(df,threshold=[1.0,0.9,0.5],
+        alignment_coverage=[0.0,0.9,0.8],memory=64000,
+        threads=32, exploded=True, verbose=True):
     '''create clusters df from sequence df (using cd hit)
     df: dataframe with sequence information
     threshold: similarity threshold for clustering (pass a list for hierarchical clustering e.g [1.0, 0.9, 0.5])
@@ -1009,7 +1011,7 @@ def clusters_df_from_sequence_df(df,threshold=[1.0,0.9,0.5],alignment_coverage=[
     
     TODO: extend to psi-cd-hit for thresholds smaller than 0.4
     '''
-    
+    print("cdhit, threads: ", threads)
     if verbose:
         print("Exporting original dataframe as fasta...")
     fasta_file = "cdhit.fasta"
