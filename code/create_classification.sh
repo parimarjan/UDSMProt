@@ -5,6 +5,24 @@ mkdir -p datasets/clas_scop
 mkdir -p datasets/clas_scop_fold
 mkdir -p datasets/clas_go
 
+###################################
+##SCOP superfamily and fold
+###################################
+##with train val split
+for x in {0..101}
+do
+    python proteomics_preprocessing.py clas_scop --scop_select=$x \
+    --split_ratio_train=0.99 --working_folder=datasets/clas_scop/clas_scop$x \
+    --pretrained_folder=datasets/lm/lm_sprot_dirty
+done
+
+#for x in {0..84}
+#do
+    #python proteomics_preprocessing.py clas_scop --scop_select=$x --split_ratio_train=0.99 --working_folder=datasets/clas_scop_fold/clas_scop_fold$x --pretrained_folder=datasets/lm/lm_sprot_uniref --foldername=SCOP167-fold
+#done
+##issue with 56 (val fold for 0.99 contained only one class)
+#python proteomics_preprocessing.py clas_scop --scop_select=56 --split_ratio_train=0.98 --working_folder=datasets/clas_scop_fold/clas_scop_fold56 --pretrained_folder=datasets/lm/lm_sprot_uniref --foldername=SCOP167-fold
+
 #python proteomics_preprocessing.py clas_ec --drop_ec7=True --working_folder=datasets/clas_ec/clas_ec_ec50_level0 --pretrained_folder=datasets/lm/lm_sprot_uniref --level=0 --include_NoEC=True --dataset="uniprot" --sampling_method_train=1 --sampling_method_valtest=3 --ignore_pretrained_clusters=True --sampling_ratio=[.8,.1,.1] --save_prev_ids=True
 
 #python proteomics_preprocessing.py clas_ec --drop_ec7=True --working_folder=datasets/clas_ec/clas_ec_ec50_level1 --pretrained_folder=datasets/lm/lm_sprot_uniref --level=1 --include_NoEC=False --dataset="uniprot" --sampling_method_train=1 --sampling_method_valtest=3 --ignore_pretrained_clusters=True --sampling_ratio=[.8,.1,.1] --save_prev_ids=True
@@ -15,13 +33,13 @@ mkdir -p datasets/clas_go
 ##################################
 #EC cdhit04 (EC40)
 ##################################
-python proteomics_preprocessing.py clas_ec --drop_ec7=True \
---working_folder=datasets/clas_ec/clas_ec_ec40_level0 \
---pretrained_folder=datasets/lm/lm_sprot_dirty --level=0 --include_NoEC=True \
---dataset="uniprot" --sampling_method_train=1 --sampling_method_valtest=3 \
---ignore_pretrained_clusters=True --sampling_ratio=[.8,.1,.1] \
---save_prev_ids=True --cluster_type=cdhit04 \
---source_sprot=/data/pari/UDSMProt/data/uniprot_sprot_2017_03.xml
+#python proteomics_preprocessing.py clas_ec --drop_ec7=True \
+#--working_folder=datasets/clas_ec/clas_ec_ec40_level0 \
+#--pretrained_folder=datasets/lm/lm_sprot_dirty --level=0 --include_NoEC=True \
+#--dataset="uniprot" --sampling_method_train=1 --sampling_method_valtest=3 \
+#--ignore_pretrained_clusters=True --sampling_ratio=[.8,.1,.1] \
+#--save_prev_ids=True --cluster_type=cdhit04 \
+#--source_sprot=/data/pari/UDSMProt/data/uniprot_sprot_2017_03.xml
 
 #python proteomics_preprocessing.py clas_ec --drop_ec7=True --working_folder=datasets/clas_ec/clas_ec_ec40_level1 --pretrained_folder=datasets/lm/lm_sprot_dirty --level=1 --include_NoEC=False --dataset="uniprot" --sampling_method_train=1 --sampling_method_valtest=3 --ignore_pretrained_clusters=True --sampling_ratio=[.8,.1,.1] --save_prev_ids=True --cluster_type=cdhit04 --source_sprot=../data/uniprot_sprot_2016_07.xml
 #python proteomics_preprocessing.py clas_ec --drop_ec7=True --working_folder=datasets/clas_ec/clas_ec_ec40_level2 --pretrained_folder=datasets/lm/lm_sprot_dirty --level=2 --include_NoEC=False --dataset="uniprot" --sampling_method_train=1 --sampling_method_valtest=3 --ignore_pretrained_clusters=True --sampling_ratio=[.8,.1,.1] --save_prev_ids=True --cluster_type=cdhit04 --source_sprot=../data/uniprot_sprot_2016_07.xml
@@ -63,21 +81,6 @@ python proteomics_preprocessing.py clas_ec --drop_ec7=True \
 
 ##python proteomics_preprocessing.py lm_sprot --working_folder=datasets/lm/lm_sprot_clean_clas_ec_ec40_level1 --ignore_clusters=False --sampling_ratio=[.9,.05,.05] --sampling_method_train=1 --sampling_method_valtest=3 --pretrained_folder=datasets/clas_ec/clas_ec_ec40_level1 --cluster_type=cdhit04 --source_sprot=../data/uniprot_sprot_2016_07.xml
 
-###################################
-##SCOP superfamily and fold
-###################################
-##with train val split
-#for x in {0..101}
-#do
-    #python proteomics_preprocessing.py clas_scop --scop_select=$x --split_ratio_train=0.99 --working_folder=datasets/clas_scop/clas_scop$x --pretrained_folder=datasets/lm/lm_sprot_uniref
-#done
-
-#for x in {0..84}
-#do
-    #python proteomics_preprocessing.py clas_scop --scop_select=$x --split_ratio_train=0.99 --working_folder=datasets/clas_scop_fold/clas_scop_fold$x --pretrained_folder=datasets/lm/lm_sprot_uniref --foldername=SCOP167-fold
-#done
-##issue with 56 (val fold for 0.99 contained only one class)
-#python proteomics_preprocessing.py clas_scop --scop_select=56 --split_ratio_train=0.98 --working_folder=datasets/clas_scop_fold/clas_scop_fold56 --pretrained_folder=datasets/lm/lm_sprot_uniref --foldername=SCOP167-fold
 
 ##########################
 ##BPE LMs

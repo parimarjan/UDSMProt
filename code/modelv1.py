@@ -2,7 +2,8 @@
 follow installation instructions at https://github.com/fastai/fastai
 '''
 import fire
- 
+import pdb
+
 import os, sys, shutil
 
 #for fbeta metric
@@ -17,7 +18,7 @@ from fastai.callbacks.tracker import EarlyStoppingCallback, SaveModelCallback
 
 kwargs_defaults = {
 "cv_fold":-1, #cv-fold -1 for single split else fold
-"working_folder":"./lm_sprot", # folder with preprocessed data 
+"working_folder":"./lm_sprot", # folder with preprocessed data
 "pretrained_folder":"./lm_sprot", # folder for pretrained model
 "model_filename_prefix":"model", # filename for saved model
 "model_folder":"",# folder for model to evaluate if train=False (empty string refers to data folder) i.e. model will be located at {model_folder}/models/{model_filename_prefix}_3.pth
@@ -51,7 +52,7 @@ kwargs_defaults = {
 "hierarchical":None, #list of lists separating different hierarchical losses e.g. [[0.6],[6,-1]] for EC level 1 [0:6] and level 2 [6:-1]
 
 "arch": "AWD_LSTM", # AWD_LSTM, Transformer, TransformerXL, BERT (BERT shares params nh, nl, dropout with the LSTM config)
-"nheads":6, # number of BERT/Transformer heads 
+"nheads":6, # number of BERT/Transformer heads
 
 "tie_encoder":True, # tie embedding and output for LMs
 
@@ -84,7 +85,7 @@ def generic_model(clas=True, **kwargs):
     for k in kwargs_defaults.keys():
         if(not( k in kwargs.keys()) or kwargs[k] is None):
             kwargs[k]=kwargs_defaults[k]
-    
+
     WORKING_FOLDER = Path(kwargs["working_folder"])
     #adjust default params for BERT/Transformer
     if(kwargs["arch"]=="BERT" or kwargs["arch"]=="Transformer" or kwargs["arch"]=="TransformerXL"):
@@ -96,7 +97,7 @@ def generic_model(clas=True, **kwargs):
             kwargs["nl"]=6
         if not("truncation_mode" in kwargs_in.keys()):
             kwargs["truncation_mode"]=1
-    
+
     #set eval_on_test if concat_train_val
     if(kwargs["concat_train_val"] is True):
         if(kwargs["eval_on_test"] is False):
@@ -106,7 +107,7 @@ def generic_model(clas=True, **kwargs):
         #    print("Concat_train_val: Setting eval_on_val_test to False.")
         #    kwargs["eval_on_val_test"] = False
 
-    
+
     #convert into list if required
     if(not(isinstance(kwargs["lr_stage_factor"],list))):
         kwargs["lr_stage_factor"]= [kwargs["lr_stage_factor"]]*3
@@ -114,7 +115,7 @@ def generic_model(clas=True, **kwargs):
         kwargs["epochs"]= [1,1,2,kwargs["epochs"]]
 
     kwargs["clas"]=clas
-    
+
     if(not(kwargs["return_learner"])):
         write_log_header(WORKING_FOLDER,kwargs)
 
@@ -122,7 +123,7 @@ def generic_model(clas=True, **kwargs):
     tok = np.load(WORKING_FOLDER/'tok.npy', allow_pickle=True)
     if(clas):
         label = np.load(WORKING_FOLDER/'label.npy')
-    
+
     # dtype issue if all sequences of same length (numpy turns array of lists into matrix)
     # turn matrix into array of python lists
     if tok.dtype is np.dtype("int32"):
@@ -131,7 +132,7 @@ def generic_model(clas=True, **kwargs):
             tok_list[i] = []
             tok_list[i].extend(tok[i].tolist())
         tok = tok_list
-        
+
     #check if multi-label
     if(clas):
         if(kwargs["annotation"] is False):#ordinary classification task
@@ -144,7 +145,8 @@ def generic_model(clas=True, **kwargs):
                 multi_class = True
             else:
                 multi_class = False
-    
+        print("multi class: ", multi_class)
+
     #get train/val/test IDs
     assert(kwargs["concat_train_val"] is False or kwargs["eval_on_test"] is True)
     if(kwargs["cv_fold"]==-1):#single split
@@ -153,8 +155,8 @@ def generic_model(clas=True, **kwargs):
         test_IDs_raw = np.load(WORKING_FOLDER/'test_IDs.npy',allow_pickle=True)
     else:#CV-fold
         train_IDs_raw = np.load(WORKING_FOLDER/'train_IDs_CV.npy',allow_pickle=True)[kwargs["cv_fold"]]
-        val_IDs_raw = np.load(WORKING_FOLDER/'val_IDs_CV.npy',allow_pickle=True)[kwargs["cv_fold"]] 
-        test_IDs_raw = np.load(WORKING_FOLDER/'test_IDs_CV.npy',allow_pickle=True)[kwargs["cv_fold"]] 
+        val_IDs_raw = np.load(WORKING_FOLDER/'val_IDs_CV.npy',allow_pickle=True)[kwargs["cv_fold"]]
+        test_IDs_raw = np.load(WORKING_FOLDER/'test_IDs_CV.npy',allow_pickle=True)[kwargs["cv_fold"]]
     train_IDs = train_IDs_raw if kwargs["concat_train_val"] is False else np.concatenate([train_IDs_raw,val_IDs_raw])
     val_IDs = val_IDs_raw if kwargs["eval_on_test"] is False else test_IDs_raw
     if(kwargs["eval_on_val_test"]):
@@ -166,7 +168,7 @@ def generic_model(clas=True, **kwargs):
            kwargs["eval_on_val_test"]=False
 
     tok_itos = np.load(WORKING_FOLDER/'tok_itos.npy',allow_pickle=True)
-    
+
     if(kwargs["from_scratch"] is False):#check if the tok_itos lists are consistent and adapt if required
         PRETRAINED_FOLDER = Path(kwargs["pretrained_folder"])
         if((PRETRAINED_FOLDER/'tok_itos.npy').exists()):
@@ -195,10 +197,11 @@ def generic_model(clas=True, **kwargs):
 
     if (clas and not(kwargs["regression"])):
         label_itos = np.load(WORKING_FOLDER/'label_itos.npy',allow_pickle=True)
-        if(kwargs["from_scratch"] is False and kwargs["pretrained_model_filename"][-4:]!="_enc"):#if trying to load a full model the label_itos has to coincide
-            label_itos_old = np.load(PRETRAINED_FOLDER/'label_itos.npy')
-            if(len(label_itos)!= len(label_itos_old) or label_itos != label_itos_old):
-                print("Warning: label_itos of both models do not coincide")
+        # if(kwargs["from_scratch"] is False and kwargs["pretrained_model_filename"][-4:]!="_enc"):#if trying to load a full model the label_itos has to coincide
+            # label_itos_old = np.load(PRETRAINED_FOLDER/'label_itos.npy')
+            # if(len(label_itos)!= len(label_itos_old) or label_itos != label_itos_old):
+                # print("Warning: label_itos of both models do not coincide")
+        print("Warning: commented out code above (pari)")
     # invert order if desired
     if(kwargs["backwards"] is True):
         for i in range(len(tok)):
@@ -228,20 +231,20 @@ def generic_model(clas=True, **kwargs):
             print("Removed",len(truncated_sequences),"sequences with length longer than",kwargs["max_seq_len"])
         else:
             print("Truncated",len(truncated_sequences),"sequences to length",kwargs["max_seq_len"])
-    
+
     trn_toks = tok[train_IDs]
     val_toks = tok[val_IDs]
 
     if(clas):
         trn_labels = label[train_IDs]
         val_labels = label[val_IDs]
-    
+
     if(kwargs["eval_on_val_test"]):
         assert(len(test_IDs)>0)
         test_toks = tok[test_IDs]
         if(clas):
-            test_labels = label[test_IDs]  
-        
+            test_labels = label[test_IDs]
+
     print("number of tokens in vocabulary:",len(tok_itos),"\ntrain/val/total sequences:",len(trn_toks),"/",len(val_toks),"/",len(trn_toks)+len(val_toks))
 
     itos={i:x for i,x in enumerate(tok_itos)}
@@ -259,7 +262,7 @@ def generic_model(clas=True, **kwargs):
             src = ItemLists(WORKING_FOLDER, TextList(items=trn_toks, vocab=vocab, path=WORKING_FOLDER, processor=[]), TextList(items=val_toks, vocab=vocab, path=WORKING_FOLDER, processor=[]))
             src = src.label_for_lm()
             data_lm= src.databunch(bs=kwargs["bs"],bptt=kwargs["bptt"])
-            
+
             #set config and arch
             if(kwargs["arch"]== "AWD_LSTM"):
                 arch = AWD_LSTM
@@ -269,7 +272,7 @@ def generic_model(clas=True, **kwargs):
                 config_lm["n_layers"]=kwargs["nl"]
                 config_lm["pad_token"]=pad_idx
                 config_lm["tie_weights"]=kwargs["tie_encoder"]
-                
+
             elif(kwargs["arch"]=="Transformer" or kwargs["arch"]=="TransformerXL"):
                 if(kwargs["arch"]=="Transformer"):
                     arch = Transformer
@@ -283,7 +286,11 @@ def generic_model(clas=True, **kwargs):
                 config_lm["n_heads"]=kwargs["nheads"]
                 config_lm["tie_weights"]=kwargs["tie_encoder"]
 
-            learn = language_model_learner(data_lm, arch, config=config_lm, pretrained=False, drop_mult=kwargs["dropout"], clip=kwargs["clip"],wd=kwargs["wd"])
+            learn = language_model_learner(data_lm, arch, config=config_lm,
+                    pretrained=False, drop_mult=kwargs["dropout"],
+                    clip=kwargs["clip"],wd=kwargs["wd"])
+
+            # pdb.set_trace()
         #set metrics for language modelling
         learn.metrics=[]
         for k in kwargs["metrics"]:
@@ -297,6 +304,9 @@ def generic_model(clas=True, **kwargs):
 
     else:#classfication
 
+        print("classification!")
+        # pdb.set_trace()
+
         #set config and arch
         if(kwargs["arch"]== "AWD_LSTM"):
             arch = AWD_LSTM
@@ -305,7 +315,7 @@ def generic_model(clas=True, **kwargs):
             config_clas["n_hid"]=kwargs["nh"]
             config_clas["n_layers"]=kwargs["nl"]
             config_clas["pad_token"]=pad_idx
-            
+
         elif(kwargs["arch"]=="Transformer" or kwargs["arch"]=="TransformerXL"):
             if(kwargs["arch"]=="Transformer"):
                 arch = Transformer
@@ -318,24 +328,24 @@ def generic_model(clas=True, **kwargs):
             config_clas["n_layers"]=kwargs["nl"]
             config_clas["n_heads"]=kwargs["nheads"]
             #config_clas["pad_token"]=pad_idx
-            
+
         if(kwargs["arch"]=="BERT"):
             pass
         elif(kwargs["regression"]):
             # factory method
-            #data_clas = TextClasDataBunch.from_ids(path=WORKING_FOLDER, vocab=vocab, train_ids=trn_toks, valid_ids=val_toks,train_lbls=trn_labels,valid_lbls=val_labels, bs=kwargs["bs"], pad_idx=pad_idx) #classes=label_itos, 
+            #data_clas = TextClasDataBunch.from_ids(path=WORKING_FOLDER, vocab=vocab, train_ids=trn_toks, valid_ids=val_toks,train_lbls=trn_labels,valid_lbls=val_labels, bs=kwargs["bs"], pad_idx=pad_idx) #classes=label_itos,
             # data block api
             src = ItemLists(WORKING_FOLDER, TextList(items=trn_toks, vocab=vocab, pad_idx=pad_idx,path=WORKING_FOLDER, processor=[]), TextList(items=val_toks, vocab=vocab, pad_idx=pad_idx, path=WORKING_FOLDER, processor=[]))
             src = src.label_from_lists(trn_labels,val_labels, label_cls=FloatList, processor=[])
             data_clas= src.databunch(bs=kwargs["bs"],pad_idx=pad_idx)
-            
+
             if(kwargs["eval_on_val_test"]):
                 src = ItemLists(WORKING_FOLDER, TextList(items=trn_toks, vocab=vocab, pad_idx=pad_idx,path=WORKING_FOLDER, processor=[]), TextList(items=test_toks, vocab=vocab, pad_idx=pad_idx, path=WORKING_FOLDER, processor=[]))
                 src = src.label_from_lists(trn_labels,test_labels, label_cls=FloatList, processor=[])
-                data_clas_test = src.databunch(bs=kwargs["bs"],pad_idx=pad_idx)                
+                data_clas_test = src.databunch(bs=kwargs["bs"],pad_idx=pad_idx)
 
             learn = text_classifier_learner(data_clas, arch, config=config_clas, pretrained=False, bptt=kwargs["bptt"], max_len=kwargs["max_len"], drop_mult=kwargs["dropout"], metrics=[],clip=kwargs["clip"],wd=kwargs["wd"],lin_ftrs=kwargs["lin_ftrs"])
-            learn.loss_func = mse_flat_inequalities #mse_flat#F.mse_loss #l1_loss   
+            learn.loss_func = mse_flat_inequalities #mse_flat#F.mse_loss #l1_loss
         else:
             #factory method
             #data_clas = TextClasDataBunch.from_ids(path=WORKING_FOLDER, vocab=vocab, train_ids=trn_toks, valid_ids=val_toks,train_lbls=trn_labels,valid_lbls=val_labels, classes=label_itos, bs=kwargs["bs"], pad_idx=pad_idx, classes=["dummy"])
@@ -343,7 +353,7 @@ def generic_model(clas=True, **kwargs):
             src = ItemLists(WORKING_FOLDER, TextList(items=trn_toks, vocab=vocab, pad_idx=pad_idx, path=WORKING_FOLDER, processor=[]), TextList(items=val_toks, vocab=vocab, pad_idx=pad_idx, path=WORKING_FOLDER, processor=[]))
             src = src.label_from_lists(trn_labels,val_labels, classes=label_itos, label_cls=(None if multi_class is False else partial(MultiCategoryList,one_hot=True)), processor=[])
             data_clas= src.databunch(bs=kwargs["bs"],pad_idx=pad_idx)
-            
+
             #debugging GO
             #for xb,yb in data_clas.train_dl:
             #    print("size",yb.size())
@@ -351,7 +361,7 @@ def generic_model(clas=True, **kwargs):
             #    print("all",yb)
             #    print("trn_labels",trn_labels[0])
             #    input()
-            
+
             if(kwargs["eval_on_val_test"]):
                 src = ItemLists(WORKING_FOLDER, TextList(items=trn_toks, vocab=vocab, pad_idx=pad_idx, path=WORKING_FOLDER, processor=[]), TextList(items=test_toks, vocab=vocab, pad_idx=pad_idx, path=WORKING_FOLDER, processor=[]))
                 src = src.label_from_lists(trn_labels,test_labels, classes=label_itos, label_cls=(None if multi_class is False else partial(MultiCategoryList,one_hot=True)), processor=[])
@@ -360,10 +370,10 @@ def generic_model(clas=True, **kwargs):
             learn = text_classifier_learner(data_clas, arch, config=config_clas, pretrained=False, bptt=kwargs["bptt"], max_len=kwargs["max_len"], drop_mult=kwargs["dropout"], metrics=[],clip=kwargs["clip"],wd=kwargs["wd"],lin_ftrs=kwargs["lin_ftrs"])
             if(multi_class):
                 if(kwargs["hierarchical"] is None):
-                    learn.loss_func = F.binary_cross_entropy_with_logits 
+                    learn.loss_func = F.binary_cross_entropy_with_logits
                 else:
                     learn.loss_func = partial(crossentropy_hierarchical,hierarchy=kwargs["hierarchical"])
-        
+
         #set metrics for classification
         if(not(kwargs["regression"])):
             for k in kwargs["metrics"]:
@@ -383,7 +393,7 @@ def generic_model(clas=True, **kwargs):
                     _,cnt = np.unique(val_labels if kwargs["concat_train_val"] else test_labels,return_counts=True)
                     #print("counts:",cnt)
                     binary_roc_auc50 = metric_func(partial(roc_auc_score,average=None,max_fpr=min(50/cnt[0],1.0)), "binary_auc50", None if kwargs["annotation"] is False else np.where(label_itos=="_none_")[0][0],metric_component=1)
-                    learn.metrics.append(binary_roc_auc50)    
+                    learn.metrics.append(binary_roc_auc50)
                 elif(k=="macro_f1"):
                     macro_f1 = metric_func(partial(fbeta_score, beta=1, average='macro'), "macro_f1", None if kwargs["annotation"] is False else np.where(label_itos=="_none_")[0][0],one_hot_encode_target=False, argmax_pred=True)
                     learn.metrics.append(macro_f1)
@@ -405,7 +415,7 @@ def generic_model(clas=True, **kwargs):
                     auc_roc_reg = metric_func(roc_auc_regression_mask, "auc_roc_reg", one_hot_encode_target=False, argmax_pred=False, softmax_pred=False, sigmoid_pred=True)
                     learn.metrics.append(auc_roc_reg)
                 else:
-                
+
                     assert False, "Encountered undefined metric:"+str(k)
 
     #add logger
@@ -415,13 +425,13 @@ def generic_model(clas=True, **kwargs):
     if(kwargs["early_stopping"]!="None"):
         #learn.callback_fns.append(partial(EarlyStoppingCallback, monitor=kwargs["early_stopping"], min_delta=0.01, patience=3))
         learn.callback_fns.append(partial(SaveModelCallback, monitor=kwargs["early_stopping"], every='improvement', name=kwargs["model_filename_prefix"]+'_3'))
-        
+
     if(kwargs["train"] and kwargs["return_learner"] is False):
         print("Training started...")
         with open(WORKING_FOLDER/'kwargs.pkl', 'wb') as handle:
             print("Saving kwargs as kwargs.pkl...")
             pickle.dump(kwargs, handle)
-            
+
         if(kwargs["fp16"]):#half-precision training
             learn = learn.to_fp16(clip=0.1)
         if(kwargs["from_scratch"] is False):
@@ -449,7 +459,7 @@ def generic_model(clas=True, **kwargs):
             print("Unfreezing one layer and finetuning...")
             learn.freeze_to(-1)
             learn.lr_find(1e-5,1e2)
-            
+
             if(kwargs["interactive"] or kwargs["interactive_finegrained"]):
                 learn.recorder.plot()#skip_start=0,skip_end=0)
                 plt.show()
@@ -463,11 +473,11 @@ def generic_model(clas=True, **kwargs):
 
             lr_find_plot(learn,WORKING_FOLDER,"lr_find_0")
             if(kwargs["epochs"][0]>0):
-                if(kwargs["fit_one_cycle"]):    
+                if(kwargs["fit_one_cycle"]):
                     learn.fit_one_cycle(kwargs["epochs"][0], lr0, moms=(0.8,0.7)) #slice(lr0) does not matter here since it is just a single layer
                 else:
                     learn.fit_one_cycle(kwargs["epochs"][0], lr0, moms=(0.8,0.7),div_factor=1.)
-                    
+
                 append_csvlogger_history(folder=WORKING_FOLDER,kwargs=kwargs)
                 losses_plot(learn, WORKING_FOLDER, filename="losses_0")
                 validate_log_csv(learn, WORKING_FOLDER)
@@ -486,13 +496,13 @@ def generic_model(clas=True, **kwargs):
                 lr1_low=float(input("stage 1 learning rate (low; high="+str(lr1_high)+"):"))
             else:
                 lr1_low = lr1_high/(kwargs["lr_slice_exponent"]**4)
-            
+
             lr_string= "stage 1 lr=slice("+str(lr1_low)+","+str(lr1_high)+")"
             print(lr_string)
             write_log(WORKING_FOLDER,lr_string)
             #plot into file
             lr_find_plot(learn,WORKING_FOLDER,"lr_find_1")
-            
+
             if(kwargs["epochs"][1]>0):
                 if(kwargs["fit_one_cycle"]):
                     learn.fit_one_cycle(kwargs["epochs"][1], slice(lr1_low,lr1_high), moms=(0.8,0.7))
@@ -502,12 +512,12 @@ def generic_model(clas=True, **kwargs):
                 losses_plot(learn, WORKING_FOLDER, filename="losses_1")
                 #validate_log_csv(learn, WORKING_FOLDER)
                 #learn.save(kwargs["model_filename_prefix"]+'_1')
-            
+
             #train top three layers
             print("\nUnfreezing three layers and finetuning...")
             learn.purge()
             learn.freeze_to(-3)
-            
+
             learn.lr_find()
             lr2_high = lr1_high if kwargs["lr_fixed"] else lr1_high/kwargs["lr_stage_factor"][1] #lr1_high/2
             if(kwargs["interactive_finegrained"]):
@@ -521,7 +531,7 @@ def generic_model(clas=True, **kwargs):
             write_log(WORKING_FOLDER,lr_string)
             #plot into file
             lr_find_plot(learn,WORKING_FOLDER,"lr_find_2")
-            
+
             if(kwargs["epochs"][2]>0):
                 if(kwargs["fit_one_cycle"]):
                     learn.fit_one_cycle(kwargs["epochs"][2], slice(lr2_low,lr2_high), moms=(0.8,0.7))
@@ -553,7 +563,7 @@ def generic_model(clas=True, **kwargs):
             else:
                 lr3_high = lr2_high if kwargs["lr_fixed"] else lr2_high/kwargs["lr_stage_factor"][2] #lr2_high/5
             lr3_low = lr3_high/(kwargs["lr_slice_exponent"]**(len(learn.layer_groups)))
-        
+
         lr_string = "stage 3 lr=slice("+str(lr3_low)+","+str(lr3_high)+")"
         print(lr_string)
         write_log(WORKING_FOLDER,lr_string)
@@ -561,14 +571,15 @@ def generic_model(clas=True, **kwargs):
         #plot into file
         lr_find_plot(learn,WORKING_FOLDER,"lr_find_3")
         if(kwargs["epochs"][3]>0):
+            # pdb.set_trace()
             if(kwargs["fit_one_cycle"]):
                 learn.fit_one_cycle(kwargs["epochs"][3], slice(lr3_low,lr3_high),  moms=(0.8,0.7))
             else:
                 learn.fit_one_cycle(kwargs["epochs"][3], slice(lr3_low,lr3_high),  moms=(0.8,0.7),div_factor=1.)
-                
+
             append_csvlogger_history(folder=WORKING_FOLDER,kwargs=kwargs)
             losses_plot(learn, WORKING_FOLDER, filename="losses_3")
-            
+
             learn.save(kwargs["model_filename_prefix"]+'_3')
             learn.save_encoder(kwargs["model_filename_prefix"]+'_3'+'_enc')
     elif(kwargs["from_scratch"] is False):
@@ -577,14 +588,14 @@ def generic_model(clas=True, **kwargs):
             learn.path = Path(kwargs["model_folder"])
         learn.load(kwargs["model_filename_prefix"]+"_3")
 
-    
+
     if(kwargs["return_learner"]):
         return learn
-        
+
     #always run validate
     result = validate_log_csv(learn, WORKING_FOLDER, kwargs=kwargs)
-    
-    
+
+
     if(kwargs["export_preds"] is True):
         filename_output = "preds_valid.npz" if kwargs["cv_fold"]==-1 else ("preds_valid_fold"+str(kwargs["cv_fold"])+".npz")
         print("Exporting predictions as ",filename_output)
@@ -594,7 +605,7 @@ def generic_model(clas=True, **kwargs):
         #val_IDs_sorted_full = np.load(CLAS_FOLDER/'ID.npy')[val_IDs_sorted]
         preds, targs = learn.get_preds(ds_type=DatasetType.Valid,ordered=True)
         np.savez(WORKING_FOLDER/filename_output,IDs=val_IDs,preds=preds,targs=targs)
-       
+
         if(kwargs["eval_on_val_test"] is True):
             filename_output = "preds_test.npz" if kwargs["cv_fold"]==-1 else ("preds_test_fold"+str(kwargs["cv_fold"])+".npz")
             print("Exporting predictions as ",filename_output)
@@ -603,11 +614,11 @@ def generic_model(clas=True, **kwargs):
             #val_clas_len = [len(x) for x in val_toks]
             #val_toks_sorted = sorted(range_of(val_toks), key=lambda t: val_clas_len[t])
             #val_IDs_sorted = [test_IDs[x] for x in val_toks_sorted]
-            
+
             preds, targs = learn.get_preds(ds_type=DatasetType.Valid,ordered=True)
             np.savez(WORKING_FOLDER/filename_output,IDs=test_IDs,preds=preds,targs=targs)
-            
-    
+
+
     if(kwargs["eval_on_val_test"]):
         result_test = validate_log_csv(learn, WORKING_FOLDER, dl=data_clas_test.valid_dl, kwargs=kwargs)
         result = [list(result),list(result_test)]
@@ -618,11 +629,11 @@ def generic_model(clas=True, **kwargs):
         tmp_model.unlink()
     #free memory
     learn.destroy()
-    
+
     #save result to file
     filename_output = "result.npy" if kwargs["cv_fold"]==-1 else "result_fold"+str(kwargs["cv_fold"])+".npy"
     np.save(WORKING_FOLDER/filename_output,result)
-    
+
     return result
 
 
@@ -635,10 +646,10 @@ class Model(object):
 
     def languagemodel(self, **kwargs):
         return self.generic_model(clas=False, **kwargs)
-    
+
     def classification(self, **kwargs):
         return self.generic_model(clas=True, **kwargs)
-    
+
 ############################################################
 #MAIN with fire
 ############################################################

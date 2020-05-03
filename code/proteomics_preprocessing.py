@@ -294,6 +294,7 @@ class Preprocess(object):
         write_log_header(CLAS_PATH,locals())
 
         data_path_scop = data_path /foldername
+        print("data path scop: ", data_path_scop)
         datasets = []
         for r in data_path_scop.glob("neg-test.*"):
             x=str(r.stem)
