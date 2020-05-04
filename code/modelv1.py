@@ -73,7 +73,8 @@ kwargs_defaults = {
 "interactive": False, # for execution in juyter environment; allows manual determination of lrs (specifying just the lr for the first finetuning step)
 "interactive_finegrained":False, # for execution in juyter environment; allows manual determination of lrs (specifying lrs for all finetuning steps)
 
-"return_learner": False #returns learner and exits
+"return_learner": False, #returns learner and exits
+"shuffle_train_data":False
 }
 
 ######################################################################################################
@@ -233,6 +234,14 @@ def generic_model(clas=True, **kwargs):
             print("Truncated",len(truncated_sequences),"sequences to length",kwargs["max_seq_len"])
 
     trn_toks = tok[train_IDs]
+    if kwargs["shuffle_train_data"]:
+        print("going to shuffle training data")
+        for i, trn_tok in enumerate(trn_toks):
+            old0 = trn_tok[0]
+            random.shuffle(trn_toks[i])
+
+        print("training data shuffled!")
+
     val_toks = tok[val_IDs]
 
     if(clas):
@@ -262,6 +271,8 @@ def generic_model(clas=True, **kwargs):
             src = ItemLists(WORKING_FOLDER, TextList(items=trn_toks, vocab=vocab, path=WORKING_FOLDER, processor=[]), TextList(items=val_toks, vocab=vocab, path=WORKING_FOLDER, processor=[]))
             src = src.label_for_lm()
             data_lm= src.databunch(bs=kwargs["bs"],bptt=kwargs["bptt"])
+
+            # pdb.set_trace()
 
             #set config and arch
             if(kwargs["arch"]== "AWD_LSTM"):
