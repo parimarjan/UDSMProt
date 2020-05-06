@@ -16,6 +16,25 @@ from model_utils import *
 from fastai.callbacks.csv_logger import CSVLogger
 from fastai.callbacks.tracker import EarlyStoppingCallback, SaveModelCallback
 
+def save_object(file_name, data):
+    with open(file_name, "wb") as f:
+        res = f.write(pickle.dumps(data))
+
+def load_object(file_name):
+    res = None
+    if os.path.exists(file_name):
+        with open(file_name, "rb") as f:
+            res = pickle.loads(f.read())
+    return res
+
+GET_OUTPUTS = False
+def save_combined_results(fn, results):
+    old = load_object(fn)
+    if old is None:
+        old = []
+    old.append(results)
+    save_object(fn, old)
+
 kwargs_defaults = {
 "cv_fold":-1, #cv-fold -1 for single split else fold
 "working_folder":"./lm_sprot", # folder with preprocessed data
@@ -74,7 +93,8 @@ kwargs_defaults = {
 "interactive_finegrained":False, # for execution in juyter environment; allows manual determination of lrs (specifying lrs for all finetuning steps)
 
 "return_learner": False, #returns learner and exits
-"shuffle_train_data":False
+"shuffle_train_data":False,
+"random_train_data":False
 }
 
 ######################################################################################################
@@ -238,9 +258,23 @@ def generic_model(clas=True, **kwargs):
         print("going to shuffle training data")
         for i, trn_tok in enumerate(trn_toks):
             old0 = trn_tok[0]
+            print(trn_tok)
+            # pdb.set_trace()
             random.shuffle(trn_toks[i])
 
         print("training data shuffled!")
+    elif kwargs["random_train_data"]:
+        print("going to gen random training data")
+        for i, trn_tok in enumerate(trn_toks):
+            # old0 = trn_tok[0]
+            # print(trn_tok)
+            # pdb.set_trace()
+            # random.shuffle(trn_toks[i])
+            # trn_toks[i] =
+            # for j, trn_tok
+            trn_toks[i] = np.random.randint(0,28,len(trn_tok))
+
+        print("training data randomized!")
 
     val_toks = tok[val_IDs]
 
@@ -432,6 +466,23 @@ def generic_model(clas=True, **kwargs):
     #add logger
     learn.callback_fns.append(CSVLogger)
 
+    def forward_hook(module, input, output):
+        # print(output.shape)
+        assert len(output[0]) == 1200
+        assert len(output) == 1
+        fn = "outputs.pkl"
+
+        # pdb.set_trace()
+        save_combined_results(fn, output[0].cpu().detach().numpy())
+
+
+        # outputs.append(output)
+        # res50_model = models.resnet50(pretrained=True)
+        # res50_model.layer4[0].conv2.register_forward_hook(hook)
+        # out = res50_model(res)
+        # out = res50_model(res1)
+        # print(outputs)
+
     #add early stopping
     if(kwargs["early_stopping"]!="None"):
         #learn.callback_fns.append(partial(EarlyStoppingCallback, monitor=kwargs["early_stopping"], min_delta=0.01, patience=3))
@@ -461,11 +512,28 @@ def generic_model(clas=True, **kwargs):
                     del sdict["model"][keys[-2]]
                     del sdict["model"][keys[-1]]
                     torch.save(sdict,dest_model)
+                    # print("before learn.load")
+                    # pdb.set_trace()
                     learn.load('pretrained',strict=False)
+                    # print("after learn.load")
+                    # pdb.set_trace()
                 else:
                     learn.load('pretrained')
 
+        if GET_OUTPUTS:
+            # hook in the things to extract it
+            # layers_ = children(learn.model)[1].layers
+            # print(layers_)
+
+            # pdb.set_trace()
+            # learn.model[0].module.rnns[2].register_forward_hook(forward_hook)
+            # learn.model[0].register_forward_hook(forward_hook)
+            learn.model[1].layers[0].register_forward_hook(forward_hook)
+            result = validate_log_csv(learn, WORKING_FOLDER, kwargs=kwargs)
+            result_test = validate_log_csv(learn, WORKING_FOLDER, dl=data_clas_test.valid_dl, kwargs=kwargs)
+
         if(kwargs["gradual_unfreezing"] is True and kwargs["from_scratch"] is False):
+        # if(kwargs["gradual_unfreezing"] is True):
             #train top layer
             print("Unfreezing one layer and finetuning...")
             learn.freeze_to(-1)
@@ -479,7 +547,6 @@ def generic_model(clas=True, **kwargs):
                 lr0 = kwargs["lr"]
 
             lr_string = "stage 0 lr="+str(lr0)
-            print(lr_string)
             write_log(WORKING_FOLDER,lr_string)
 
             lr_find_plot(learn,WORKING_FOLDER,"lr_find_0")
@@ -594,6 +661,7 @@ def generic_model(clas=True, **kwargs):
             learn.save(kwargs["model_filename_prefix"]+'_3')
             learn.save_encoder(kwargs["model_filename_prefix"]+'_3'+'_enc')
     elif(kwargs["from_scratch"] is False):
+        # assert False
         print("Loading model ",kwargs["model_filename_prefix"]+"_3","from",kwargs["model_folder"])
         if(kwargs["model_folder"]!=""):
             learn.path = Path(kwargs["model_folder"])
@@ -603,9 +671,9 @@ def generic_model(clas=True, **kwargs):
     if(kwargs["return_learner"]):
         return learn
 
+
     #always run validate
     result = validate_log_csv(learn, WORKING_FOLDER, kwargs=kwargs)
-
 
     if(kwargs["export_preds"] is True):
         filename_output = "preds_valid.npz" if kwargs["cv_fold"]==-1 else ("preds_valid_fold"+str(kwargs["cv_fold"])+".npz")
@@ -641,6 +709,8 @@ def generic_model(clas=True, **kwargs):
     #free memory
     learn.destroy()
 
+    print(result)
+    # pdb.set_trace()
     #save result to file
     filename_output = "result.npy" if kwargs["cv_fold"]==-1 else "result_fold"+str(kwargs["cv_fold"])+".npy"
     np.save(WORKING_FOLDER/filename_output,result)
