@@ -11,7 +11,6 @@ from sklearn.metrics import roc_auc_score, fbeta_score
 #import warnings
 from torch.nn.modules.loss import MSELoss, L1Loss
 
-
 from model_utils import *
 from fastai.callbacks.csv_logger import CSVLogger
 from fastai.callbacks.tracker import EarlyStoppingCallback, SaveModelCallback
@@ -27,7 +26,7 @@ def load_object(file_name):
             res = pickle.loads(f.read())
     return res
 
-GET_OUTPUTS = False
+GET_OUTPUTS = True
 def save_combined_results(fn, results):
     old = load_object(fn)
     if old is None:
@@ -331,9 +330,18 @@ def generic_model(clas=True, **kwargs):
                 config_lm["n_heads"]=kwargs["nheads"]
                 config_lm["tie_weights"]=kwargs["tie_encoder"]
 
-            learn = language_model_learner(data_lm, arch, config=config_lm,
-                    pretrained=False, drop_mult=kwargs["dropout"],
-                    clip=kwargs["clip"],wd=kwargs["wd"])
+            # learn = language_model_learner(data_lm, arch, config=config_lm,
+                    # pretrained=False, drop_mult=kwargs["dropout"],
+                    # clip=kwargs["clip"],wd=kwargs["wd"])
+
+            # net_params = filter(lambda p: p.requires_grad,
+                    # learn.model.parameters())
+            # weight_count = 0
+            # for param in net_params:
+                # weight_count += np.prod(param.size())
+            # print("num weights: ", weight_count)
+
+            # pdb.set_trace()
 
             # pdb.set_trace()
         #set metrics for language modelling
@@ -408,9 +416,16 @@ def generic_model(clas=True, **kwargs):
             #    input()
 
             if(kwargs["eval_on_val_test"]):
-                src = ItemLists(WORKING_FOLDER, TextList(items=trn_toks, vocab=vocab, pad_idx=pad_idx, path=WORKING_FOLDER, processor=[]), TextList(items=test_toks, vocab=vocab, pad_idx=pad_idx, path=WORKING_FOLDER, processor=[]))
-                src = src.label_from_lists(trn_labels,test_labels, classes=label_itos, label_cls=(None if multi_class is False else partial(MultiCategoryList,one_hot=True)), processor=[])
-                data_clas_test= src.databunch(bs=kwargs["bs"],pad_idx=pad_idx)
+                src = ItemLists(WORKING_FOLDER, TextList(items=trn_toks,
+                    vocab=vocab, pad_idx=pad_idx, path=WORKING_FOLDER,
+                    processor=[]), TextList(items=test_toks, vocab=vocab,
+                        pad_idx=pad_idx, path=WORKING_FOLDER, processor=[]))
+                src = src.label_from_lists(trn_labels,test_labels,
+                        classes=label_itos, label_cls=(None if multi_class is
+                            False else
+                            partial(MultiCategoryList,one_hot=True)),
+                        processor=[])
+                data_clas_test = src.databunch(bs=kwargs["bs"],pad_idx=pad_idx)
 
             learn = text_classifier_learner(data_clas, arch, config=config_clas, pretrained=False, bptt=kwargs["bptt"], max_len=kwargs["max_len"], drop_mult=kwargs["dropout"], metrics=[],clip=kwargs["clip"],wd=kwargs["wd"],lin_ftrs=kwargs["lin_ftrs"])
             if(multi_class):
@@ -525,12 +540,12 @@ def generic_model(clas=True, **kwargs):
             # layers_ = children(learn.model)[1].layers
             # print(layers_)
 
-            # pdb.set_trace()
             # learn.model[0].module.rnns[2].register_forward_hook(forward_hook)
             # learn.model[0].register_forward_hook(forward_hook)
             learn.model[1].layers[0].register_forward_hook(forward_hook)
             result = validate_log_csv(learn, WORKING_FOLDER, kwargs=kwargs)
-            result_test = validate_log_csv(learn, WORKING_FOLDER, dl=data_clas_test.valid_dl, kwargs=kwargs)
+            # result_test = validate_log_csv(learn, WORKING_FOLDER, dl=data_clas_test.valid_dl, kwargs=kwargs)
+            pass
 
         if(kwargs["gradual_unfreezing"] is True and kwargs["from_scratch"] is False):
         # if(kwargs["gradual_unfreezing"] is True):

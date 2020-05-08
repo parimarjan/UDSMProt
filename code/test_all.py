@@ -13,7 +13,7 @@ CLAS_TMP = '''python modelv1.py classification --from_scratch={FROM_SCRATCH} \
 --bs=64 --lr=0.05 --fit_one_cycle=False \
 --working_folder={WORKING_FOLDER} \
 --export_preds=True --eval_on_val_test=True --pretrained_model_filename {PRETRAINED_NAME} \
---epochs 10 --train=True --gradual_unfreezing={UNFREEZE} \
+--epochs 5 --train=True --gradual_unfreezing={UNFREEZE} \
 --nh {NH} --nl {NL}'''
 
 SCOP_DIR = '/data/pari/UDSMProt/datasets/clas_scop/'
@@ -30,7 +30,6 @@ def load_object(file_name):
     return res
 
 def save_combined_results(results, output_dir):
-    print(output_dir)
     fn = output_dir + "/results.pkl"
     old = load_object(fn)
     if old is None:
@@ -95,8 +94,15 @@ def main():
         basename = os.path.basename(scop_dir)
         if "scop" not in basename:
             continue
+        if sci > 12:
+            continue
         testfile = output_dir + "/" + basename + ".log"
         if os.path.exists(testfile):
+            print("skipping: ", basename)
+            continue
+
+        testfile2 = output_dir + "/" + basename + ".res"
+        if os.path.exists(testfile2):
             print("skipping: ", basename)
             continue
 
@@ -111,8 +117,8 @@ def main():
                         PRETRAINED_NAME = args.pretrained_name,
                         NL = args.nl,
                         NH = args.nh)
-        p = sp.Popen(exec_cmd, shell=True, stdout=lf)
-        # p = sp.Popen(exec_cmd, shell=True)
+        # p = sp.Popen(exec_cmd, shell=True, stdout=lf)
+        p = sp.Popen(exec_cmd, shell=True)
         p.wait()
         lf.close()
 
@@ -134,6 +140,5 @@ def main():
 
 if __name__ == "__main__":
 
-    print(SCOP_DIR)
     args = read_flags()
     main()
